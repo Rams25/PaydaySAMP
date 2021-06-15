@@ -1,12 +1,12 @@
-#define		MYSQL_HOST 			"195.154.232.220"
-#define		MYSQL_USER 			"root"
-#define 	MYSQL_PASSWORD 		"vertrigo"
-#define		MYSQL_DATABASE 		"payday"
+#define		MYSQL_HOST 			""
+#define		MYSQL_USER 			""
+#define 	MYSQL_PASSWORD 		""
+#define		MYSQL_DATABASE 		""
 #define		SECONDS_TO_LOGIN 	30
 #define 	DEFAULT_POS_X 		1958.3783
 #define 	DEFAULT_POS_Y 		1343.1572
 #define 	DEFAULT_POS_Z 		15.3746
-#define 	DEFAULT_POS_A 		270.1425
+#define 	DEFAULT_POS_A 		270.1423
 
 #define 	COLOR_SIM 			0xA9C4E4FF
 
