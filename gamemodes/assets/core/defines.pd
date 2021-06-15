@@ -6,7 +6,7 @@
 #define 	DEFAULT_POS_X 		1958.3783
 #define 	DEFAULT_POS_Y 		1343.1572
 #define 	DEFAULT_POS_Z 		15.3746
-#define 	DEFAULT_POS_A 		270.1425
+#define 	DEFAULT_POS_A 		270.1424
 
 #define 	COLOR_SIM 			0xA9C4E4FF
 
