@@ -1,0 +1,24 @@
+#define		MYSQL_HOST 			"195.154.232.220"
+#define		MYSQL_USER 			"root"
+#define 	MYSQL_PASSWORD 		"vertrigo"
+#define		MYSQL_DATABASE 		"payday"
+#define		SECONDS_TO_LOGIN 	30
+#define 	DEFAULT_POS_X 		1958.3783
+#define 	DEFAULT_POS_Y 		1343.1572
+#define 	DEFAULT_POS_Z 		15.3746
+#define 	DEFAULT_POS_A 		270.1425
+
+#define 	COLOR_SIM 			0xA9C4E4FF
+
+#define 	this::%0(%1) \
+								forward %0(%1);\
+    							public %0(%1)
+#define 	timer::%0(%1) \
+    							forward %0(%1);\
+    							public %0(%1)
+
+#define 	SCM 				SendClientMessageEx
+#define 	SIM(%0,%1) 	\
+								SendClientMessageEx(%0, COLOR_SIM, "|{FFFFFF} "%1)
+#define 	SITA(%0) 	\
+  								SendClientMessageToAllEx(COLOR_SIM, "|{FFFFFF} "%0)

@@ -1,0 +1,1 @@
+new Player[MAX_PLAYERS][E_PLAYERS];

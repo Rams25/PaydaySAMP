@@ -1,0 +1,3 @@
+#define 	SPECTATOR 	(0)
+#define 	CRIMINAL	(1)
+#define 	COP 		(2)

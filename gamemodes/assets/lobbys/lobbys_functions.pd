@@ -1,0 +1,195 @@
+Lobbys_OnGameModeInit()
+{
+	mysql_tquery(g_SQL, "SELECT * FROM `lobby`", "Lobbys_Load", "");
+	return true;
+}
+
+this::Lobbys_Load()
+{
+	new rows = cache_num_rows(), time = GetTickCount(), total;
+
+	if (!rows) return print("[Lobbys] No records found.");
+	
+	for(new i; i < rows; i++)
+	{
+		cache_get_value_name_int(i, "id", Lobbys[i][L_ID]);
+		cache_get_value_name_int(i, "type", Lobbys[i][L_Type]);
+		cache_get_value_name_int(i, "since_date", Lobbys[i][L_Time]);
+		cache_get_value_name_int(i, "maxplayers", Lobbys[i][L_MaxPlayers]);
+		cache_get_value_name(i, "name", Lobbys[i][L_Name], 255);
+		total++;
+	}
+
+	printf("[Lobbys] Rows - %i. Load - %i. Time: %i ms.", rows, total, GetTickCount()-time);
+	return 1;
+}
+
+this::SearchForLobby(playerid)
+{
+	new bool:total=false;
+	for (new i; i < sizeof Lobbys; i++)
+	{
+		if (PlayersInLobby(i) < Lobbys[i][L_MaxPlayers])
+		{
+			if (!Lobbys[i][L_Started])
+			{
+				total=true;
+				return PlayerJoinLobby(playerid, i);
+			}
+		} else continue;
+	}
+	if (!total)
+		return SIM(playerid, "Aucun lobby n'est disponible pour le moment, ouverture du tableau en cours...");
+	return true;
+}
+
+this::PlayersInLobby(lobby)
+{
+	new total = 0;
+	foreach(new i : Player)
+	{
+		if (Player[i][CurrentLobby] == lobby) total++; 
+	}
+	return total;
+}
+
+this::PlayerJoinLobby(playerid, lobby)
+{
+	Player[playerid][CurrentLobby] = lobby;
+	Player[playerid][TimeCurrentLobby] = gettime();
+	Player[playerid][EkipLobby] = 0;
+
+	SIM(playerid, "Vous rejoignez le lobby %s, il y a actuellement %d/%d personnes.", Lobbys[lobby][L_Name], PlayersInLobby(lobby), Lobbys[lobby][L_MaxPlayers]);
+	AssignPlayerToEkip(playerid, lobby);
+	ShowLobbyToAll(lobby);
+	if (PlayersInLobby(lobby) == 1)
+	{
+		Lobbys[lobby][L_Chef] = playerid;
+		LobbyResearchTimer[lobby] = SetTimerEx("LobbyResearch", 30000, true, "i", lobby);
+	}
+	if (PlayersInLobby(lobby)-1 == 4)
+	{
+		new Chef = Lobbys[lobby][L_Chef];
+		SIM(Chef, "Vous pouvez désormais lancer la partie. [/lancerpartie]");
+	}
+	return true;
+}
+
+this::ShowLobbyToAll(lobby)
+{
+	foreach (new i : Player)
+	{
+		if (Player[i][CurrentLobby] == lobby)
+			ShowLobbyToPlayer(i, lobby);
+	}
+	return true;
+}
+
+this::ShowLobbyToPlayer(playerid, lobby)
+{
+	new lobby_header[255], players[255];
+	format(lobby_header, sizeof lobby_header, "%s (%d/%d)", Lobbys[lobby][L_Name], PlayersInLobby(lobby), Lobbys[lobby][L_MaxPlayers]);
+	format(players, sizeof players, "Joueur\tRejoins à\tEquipe\n");
+	foreach (new i : Player)
+	{
+		if (Player[i][CurrentLobby] == lobby)
+		{
+			new Time[6];
+			ParseTimestamp(Player[i][TimeCurrentLobby], Time[0], Time[1], Time[2], Time[3], Time[4], Time[5], 2);
+			if (Lobbys[lobby][L_Chef] == i) format(players, sizeof players, "%s\n%s (Chef)\tRejoins à %dh%d:%d\t%s", players, Player[i][Name], Time[3], Time[4], Time[5], GetPlayerEkipString(playerid));
+			else format(players, sizeof players, "%s\n%s\tRejoins à %dh%d:%d\t%s", players, Player[i][Name], Time[3], Time[4], Time[5], GetPlayerEkipString(playerid));
+		}
+	}
+	Dialog_Show(playerid, Lobby, DIALOG_STYLE_TABLIST_HEADERS, lobby_header, players, "ATTENTE", "");
+	return true;
+}
+
+Dialog:Lobby(playerid, response, listitem, inputtext[])
+{
+	return ShowLobbyToPlayer(playerid, Player[playerid][CurrentLobby]);
+}
+
+this::StartParty(lobby)
+{
+	KillTimer(LobbyResearchTimer[lobby]);
+	foreach (new i : Player)
+	{
+		if (Player[i][CurrentLobby] == lobby)
+		{
+			SetSpawnInfo(i, NO_TEAM, 0, Positions[Lobbys[lobby][L_Type]][0], Positions[Lobbys[lobby][L_Type]][1], Positions[Lobbys[lobby][L_Type]][2], Positions[Lobbys[lobby][L_Type]][3], 0, 0, 0, 0, 0, 0);
+			SpawnPlayer(i);
+			SetPlayerPos(i, Positions[Lobbys[lobby][L_Type]][0], Positions[Lobbys[lobby][L_Type]][1], Positions[Lobbys[lobby][L_Type]][2]);
+			SetPlayerFacingAngle(i, Positions[Lobbys[lobby][L_Type]][3]);
+			Lobbys[lobby][L_Step] = 1;
+			Lobbys[lobby][L_Started] = true;
+			SIM(i, "La partie commence, vous êtes un %s. Suivez les instructions sur la droite de votre écran.", GetPlayerEkipString(i));
+			return true;
+		} 
+		else 
+		{
+			if (Player[i][CurrentLobby]==0)
+				return SIM(i, "La partie du lobby %s commence.", Lobbys[lobby][L_Name]);
+		}
+	}
+	return true;
+}
+
+stock GetPlayerEkipString(playerid)
+{
+	new string[24];
+	switch (Player[playerid][EkipLobby])
+	{
+		case 	COP:		format(string, sizeof string, "Policier");
+		case 	CRIMINAL:	format(string, sizeof string, "Braqueur");
+		default: 			format(string, sizeof string, "En attente");
+	}
+	return string;
+}
+this::GetCopsInLobby(lobby)
+{
+	new total;
+	foreach (new i : Player)
+	{
+		if (Player[i][CurrentLobby] == lobby)
+		{
+			if (Player[i][EkipLobby] == COP)
+				total++;
+		}
+	}
+	return total;
+}
+this::GetRobbersInLobby(lobby)
+{
+	new total;
+	foreach (new i : Player)
+	{
+		if (Player[i][CurrentLobby] == lobby)
+		{
+			if (Player[i][EkipLobby] == CRIMINAL)
+				total++;
+		}
+	}
+	return total;
+}
+this::AssignPlayerToEkip(playerid, lobby)
+{
+	new robbers = GetRobbersInLobby(lobby), cops = GetCopsInLobby(lobby);
+	if (robbers > cops)
+	{
+		Player[playerid][EkipLobby] = COP;
+	}
+	else if (cops > robbers)
+	{
+		Player[playerid][EkipLobby] = CRIMINAL;
+	}
+	else if (cops == robbers)
+	{
+		Player[playerid][EkipLobby] = random(2)+1;
+	}
+	return true;
+}
+
+timer::LobbyResearch(lobby)
+{
+	return true;
+}

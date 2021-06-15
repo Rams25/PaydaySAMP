@@ -1,0 +1,11 @@
+enum Lobbys_enum
+{
+	L_ID,
+	L_Type,
+	L_Time,
+	L_Name[255],
+	bool:L_Started,
+	L_Chef,
+	L_MaxPlayers,
+	L_Step
+};

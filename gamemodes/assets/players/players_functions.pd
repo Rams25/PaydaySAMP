@@ -1,0 +1,230 @@
+Players_OnPlayerConnect(playerid)
+{
+	g_MysqlRaceCheck[playerid]++;
+	static const empty_player[E_PLAYERS];
+	Player[playerid] = empty_player;
+	GetPlayerName(playerid, Player[playerid][Name], MAX_PLAYER_NAME);
+	new ORM: ormid = Player[playerid][ORM_ID] = orm_create("players", g_SQL);
+
+	orm_addvar_int(ormid, Player[playerid][ID], "id");
+	orm_addvar_string(ormid, Player[playerid][Name], MAX_PLAYER_NAME, "username");
+	orm_addvar_string(ormid, Player[playerid][Password], 65, "password");
+	orm_addvar_string(ormid, Player[playerid][Salt], 17, "salt");
+	orm_addvar_int(ormid, Player[playerid][Kills], "kills");
+	orm_addvar_int(ormid, Player[playerid][Deaths], "deaths");
+	orm_addvar_float(ormid, Player[playerid][X_Pos], "x");
+	orm_addvar_float(ormid, Player[playerid][Y_Pos], "y");
+	orm_addvar_float(ormid, Player[playerid][Z_Pos], "z");
+	orm_addvar_float(ormid, Player[playerid][A_Pos], "angle");
+	orm_addvar_int(ormid, Player[playerid][Interior], "interior");
+	orm_setkey(ormid, "username");
+	orm_load(ormid, "OnPlayerDataLoaded", "dd", playerid, g_MysqlRaceCheck[playerid]);
+	return true;
+}
+Players_OnPlayerDisconnect(playerid, reason)
+{
+	g_MysqlRaceCheck[playerid]++;
+
+	UpdatePlayerData(playerid, reason);
+
+	// if the player was kicked before the time expires (30 seconds), kill the timer
+	if (Player[playerid][LoginTimer])
+	{
+		KillTimer(Player[playerid][LoginTimer]);
+		Player[playerid][LoginTimer] = 0;
+	}
+
+	// sets "IsLoggedIn" to false when the player disconnects, it prevents from saving the player data twice when "gmx" is used
+	Player[playerid][IsLoggedIn] = false;
+	return true;
+}
+
+forward OnPlayerDataLoaded(playerid, race_check);
+public OnPlayerDataLoaded(playerid, race_check)
+{
+	if (race_check != g_MysqlRaceCheck[playerid]) return Kick(playerid);
+
+	orm_setkey(Player[playerid][ORM_ID], "id");
+
+	new string[115];
+	switch (orm_errno(Player[playerid][ORM_ID]))
+	{
+		case ERROR_OK:
+		{
+			format(string, sizeof string, "Votre compte (%s) est enregistré.\nEntrez votre mot de passe ci-dessous pour continuer :", Player[playerid][Name]);
+			Dialog_Show(playerid, Login, DIALOG_STYLE_PASSWORD, "Connexion", string, "Continuer", "Quitter");
+			Player[playerid][LoginTimer] = SetTimerEx("OnLoginTimeout", SECONDS_TO_LOGIN * 1000, false, "d", playerid);
+		}
+		case ERROR_NO_DATA:
+		{
+			format(string, sizeof string, "Bienvenue %s,\nvous pouvez commencer votre inscription en indiquant votre mot de passe ci-dessous.\n\nAttention: Veillez à utiliser un mot de passe que vous n'utilisez pas ailleurs.", Player[playerid][Name]);
+			Dialog_Show(playerid, Register, DIALOG_STYLE_PASSWORD, "Inscription", string, "Continuer", "Quitter");
+		}
+	}
+	return 1;
+}
+
+forward OnLoginTimeout(playerid);
+public OnLoginTimeout(playerid)
+{
+	// reset the variable that stores the timerid
+	Player[playerid][LoginTimer] = 0;
+
+	//Dialog_Show(playerid, DIALOGUNUSED, DIALOG_STYLE_MSGBOX, "Login", "You have been kicked for taking too long to login successfully to your account.", "Okay", "");
+	DelayedKick(playerid);
+	return 1;
+}
+
+forward OnPlayerRegister(playerid);
+public OnPlayerRegister(playerid)
+{
+	Dialog_Show(playerid, DIALOGUNUSED, DIALOG_STYLE_MSGBOX, "Registration", "Account successfully registered, you have been automatically logged in.", "Okay", "");
+
+	Player[playerid][IsLoggedIn] = true;
+
+	Player[playerid][X_Pos] = DEFAULT_POS_X;
+	Player[playerid][Y_Pos] = DEFAULT_POS_Y;
+	Player[playerid][Z_Pos] = DEFAULT_POS_Z;
+	Player[playerid][A_Pos] = DEFAULT_POS_A;
+
+	SetSpawnInfo(playerid, NO_TEAM, 0, Player[playerid][X_Pos], Player[playerid][Y_Pos], Player[playerid][Z_Pos], Player[playerid][A_Pos], 0, 0, 0, 0, 0, 0);
+	SpawnPlayer(playerid);
+	return 1;
+}
+
+forward _KickPlayerDelayed(playerid);
+public _KickPlayerDelayed(playerid)
+{
+	Kick(playerid);
+	return 1;
+}
+
+
+//-----------------------------------------------------
+
+DelayedKick(playerid, time = 500)
+{
+	SetTimerEx("_KickPlayerDelayed", time, false, "d", playerid);
+	return 1;
+}
+
+SetupPlayerTable()
+{
+	mysql_tquery(g_SQL, "CREATE TABLE IF NOT EXISTS `players` (`id` int(11) NOT NULL AUTO_INCREMENT,`username` varchar(24) NOT NULL,`password` char(64) NOT NULL,`salt` char(16) NOT NULL,`kills` mediumint(8) NOT NULL DEFAULT '0',`deaths` mediumint(8) NOT NULL DEFAULT '0',`x` float NOT NULL DEFAULT '0',`y` float NOT NULL DEFAULT '0',`z` float NOT NULL DEFAULT '0',`angle` float NOT NULL DEFAULT '0',`interior` tinyint(3) NOT NULL DEFAULT '0', PRIMARY KEY (`id`), UNIQUE KEY `username` (`username`))");
+	return 1;
+}
+
+UpdatePlayerData(playerid, reason)
+{
+	if (Player[playerid][IsLoggedIn] == false) return 0;
+
+	// if the client crashed, it's not possible to get the player's position in OnPlayerDisconnect callback
+	// so we will use the last saved position (in case of a player who registered and crashed/kicked, the position will be the default spawn point)
+	if (reason == 1)
+	{
+		GetPlayerPos(playerid, Player[playerid][X_Pos], Player[playerid][Y_Pos], Player[playerid][Z_Pos]);
+		GetPlayerFacingAngle(playerid, Player[playerid][A_Pos]);
+	}
+
+	// it is important to store everything in the variables registered in ORM instance
+	Player[playerid][Interior] = GetPlayerInterior(playerid);
+
+	// orm_save sends an UPDATE query
+	orm_save(Player[playerid][ORM_ID]);
+	orm_destroy(Player[playerid][ORM_ID]);
+	return 1;
+}
+
+UpdatePlayerDeaths(playerid)
+{
+	if (Player[playerid][IsLoggedIn] == false) return 0;
+
+	Player[playerid][Deaths]++;
+
+	orm_update(Player[playerid][ORM_ID]);
+	return 1;
+}
+
+UpdatePlayerKills(killerid)
+{
+	// we must check before if the killer wasn't valid (connected) player to avoid run time error 4
+	if (killerid == INVALID_PLAYER_ID) return 0;
+	if (Player[killerid][IsLoggedIn] == false) return 0;
+
+	Player[killerid][Kills]++;
+
+	orm_update(Player[killerid][ORM_ID]);
+	return 1;
+}
+
+SendClientMessageEx(playerid, color, const str[], {Float,_}:...)
+{
+	static args, start, end, string[144];
+	#emit LOAD.S.pri 8
+	#emit STOR.pri args
+
+	if (args > 12)
+	{
+		#emit ADDR.pri str
+		#emit STOR.pri start
+
+	    for (end = start + (args - 12); end > start; end -= 4)
+		{
+	        #emit LREF.pri end
+	        #emit PUSH.pri
+		}
+		#emit PUSH.S str
+		#emit PUSH.C 144
+		#emit PUSH.C string
+		#emit PUSH.C args
+		#emit SYSREQ.C format
+	
+		SendClientMessage(playerid, color, string);
+
+		#emit LCTRL 5
+		#emit SCTRL 4
+		#emit RETN
+	}
+	return SendClientMessage(playerid, color, str);
+}
+
+stock SendClientMessageToAllEx(color, const str[], {Float,_}:...)
+{
+	static
+	    args,
+	    start,
+	    end,
+	    string[144]
+	;
+	#emit LOAD.S.pri 8
+	#emit STOR.pri args
+
+	if (args > 8)
+	{
+		#emit ADDR.pri str
+		#emit STOR.pri start
+
+	    for (end = start + (args - 8); end > start; end -= 4)
+		{
+	        #emit LREF.pri end
+	        #emit PUSH.pri
+		}
+		#emit PUSH.S str
+		#emit PUSH.C 144
+		#emit PUSH.C string
+
+		#emit LOAD.pri args
+		#emit ADD.C 4
+		#emit PUSH.pri
+		#emit SYSREQ.C format
+
+        #emit LCTRL 5
+		#emit SCTRL 4
+
+		foreach (new i : Player) {
+			SendClientMessage(i, color, string);
+		}
+		return 1;
+	}
+	return SendClientMessageToAll(color, str);
+} 
