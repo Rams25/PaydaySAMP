@@ -127,7 +127,7 @@ this::StartParty(lobby)
 		} 
 		else 
 		{
-			if (Player[i][CurrentLobby]==0)
+			if (!Player[i][CurrentLobby])
 				return SIM(i, "La partie du lobby %s commence.", Lobbys[lobby][L_Name]);
 		}
 	}
