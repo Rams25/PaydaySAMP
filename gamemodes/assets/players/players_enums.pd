@@ -20,5 +20,6 @@ enum E_PLAYERS
 
 	CurrentLobby,
 	TimeCurrentLobby,
-	EkipLobby // 0 : guetteur | 1 : bandit | 2 : hnouch
+	EkipLobby, // 0 : guetteur | 1 : bandit | 2 : hnouch
+	Level,
 };

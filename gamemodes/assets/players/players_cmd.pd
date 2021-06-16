@@ -1,0 +1,5 @@
+CMD:aide(playerid, params[])
+{
+	Dialog_Show(playerid, MenuHelp, DIALOG_STYLE_TABLIST, "Menu d'aide", "Le concept\nLes commandes\nLes lobbys\nLe monde ouvert", "Continuer", "");
+	return true;
+}

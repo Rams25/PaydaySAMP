@@ -13,9 +13,15 @@ Dialog:Login(playerid, response, listitem, inputtext[])
 		Player[playerid][IsLoggedIn] = true;
 		SetPlayerColor(playerid, 0x00FFFFFF);
 
-		//SetSpawnInfo(playerid, NO_TEAM, 0, Player[playerid][X_Pos], Player[playerid][Y_Pos], Player[playerid][Z_Pos], Player[playerid][A_Pos], 0, 0, 0, 0, 0, 0);
-		//SpawnPlayer(playerid);
-		return SearchForLobby(playerid);
+		if (Player[playerid][Level] > 3)
+			return SearchForLobby(playerid);
+		else
+		{
+			SIM(playerid, "Vous n'êtes pas niveau 4 ou plus, vous ne pouvez donc pas accéder aux lobbys.");
+			SetSpawnInfo(playerid, NO_TEAM, 0, Player[playerid][X_Pos], Player[playerid][Y_Pos], Player[playerid][Z_Pos], Player[playerid][A_Pos], 0, 0, 0, 0, 0, 0);
+			return SpawnPlayer(playerid);
+		}
+
 	}
 	else
 	{
@@ -38,4 +44,47 @@ Dialog:Register(playerid, response, listitem, inputtext[])
 	SHA256_PassHash(inputtext, Player[playerid][Salt], Player[playerid][Password], 65);
 	orm_save(Player[playerid][ORM_ID], "OnPlayerRegister", "d", playerid);
 	return true;
+}
+
+Dialog:MenuHelp(playerid, response, listitem, inputtext[])
+{
+	if(!response) return true;
+	switch(listitem)
+	{
+		case 0:
+		{
+			Dialog_Show(playerid, ReturnHelp, DIALOG_STYLE_MSGBOX, "Le concept", "Payday SAMP est un concept basé sur le jeu mondialement connu \"Payday\",\n\
+				Vous devrez gagner de l'argent dans le monde ouvert avec des missions ou des simples jobs et gagner des niveaux pour effectuer de gros braquages.\n\
+				Le monde ouvert n'est pas soumis aux réglementations semi-RP, contrairement aux lobbys qui, eux, le sont.\n\
+				Des mini-jeux lobbys seront disponibles au fil des mises à jour.", "Retour", "");
+		}
+		case 1:
+		{
+			Dialog_Show(playerid, ReturnHelp, DIALOG_STYLE_MSGBOX, "Les commandes", "/aide - vous renvoie vers le menu d'aide\n\
+				/braquer (touche Y) - vous fait effectuer un braquage de commerce.\n\
+				/voler (touche Y) - vol un autre joueur à vos côtés. Soumis à une attente de 3 minutes entre chaque vol.\n\
+				/lobbys - vous renvoie vers les lobbys et mini-jeux disponibles.", "Retour", "");
+		}
+		case 2:
+		{
+			Dialog_Show(playerid, ReturnHelp, DIALOG_STYLE_MSGBOX, "Les lobbys", "Les lobbys sont des parties qui vous téléportent vers un monde de braquage intensif.\n\
+				Vous devrez préparer votre braquage avec votre équipe, ainsi que préparer votre équipement.\n\
+				La police se charge de préparer la contre attaque tandis que les braqueurs préparent la contre-attaque.\n\
+				Vous pouvez à tout moment chercher un lobby avec la touche /lobby.", "Retour", "");
+		}
+		case 3:
+		{
+			Dialog_Show(playerid, ReturnHelp, DIALOG_STYLE_MSGBOX, "Le monde ouvert", "Le monde ouvert vous est disponible à chaque connexion au serveur ainsi qu'à la fin de chaque partie en lobby.\n\
+				Vous ne pouvez pas le rejoindre en lobby, si vous quittez un lobby en cours, une pénalité peut vous être attribuée.\n\
+				Les braquages de superettes se font uniquement avec une arme à feu en main.\n\
+				L'armurerie est seulement disponible pour ceux qui ont le budget nécessaire.\n\
+				Le vol doit être effectué sur un joueur non-armé, vous devez être armé d'un couteau afin de voler celui-ci.", "Retour", "");
+		}
+	}
+	return true;
+}
+
+Dialog:ReturnHelp(playerid, response, listitem, inputtext[])
+{
+	return PC_EmulateCommand(playerid, "/aide");
 }

@@ -10,7 +10,6 @@ MySQLConnect_OnGameModeInit()
 		return 1;
 	}
 	print("MySQL connection is successful.");
-	SetupPlayerTable();
 	mysql_log(ERROR);
 	return true;
 }

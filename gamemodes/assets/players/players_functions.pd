@@ -17,6 +17,7 @@ Players_OnPlayerConnect(playerid)
 	orm_addvar_float(ormid, Player[playerid][Z_Pos], "z");
 	orm_addvar_float(ormid, Player[playerid][A_Pos], "angle");
 	orm_addvar_int(ormid, Player[playerid][Interior], "interior");
+	orm_addvar_int(ormid, Player[playerid][Level], "level");
 	orm_setkey(ormid, "username");
 	orm_load(ormid, "OnPlayerDataLoaded", "dd", playerid, g_MysqlRaceCheck[playerid]);
 	return true;
@@ -108,28 +109,17 @@ DelayedKick(playerid, time = 500)
 	return 1;
 }
 
-SetupPlayerTable()
-{
-	mysql_tquery(g_SQL, "CREATE TABLE IF NOT EXISTS `players` (`id` int(11) NOT NULL AUTO_INCREMENT,`username` varchar(24) NOT NULL,`password` char(64) NOT NULL,`salt` char(16) NOT NULL,`kills` mediumint(8) NOT NULL DEFAULT '0',`deaths` mediumint(8) NOT NULL DEFAULT '0',`x` float NOT NULL DEFAULT '0',`y` float NOT NULL DEFAULT '0',`z` float NOT NULL DEFAULT '0',`angle` float NOT NULL DEFAULT '0',`interior` tinyint(3) NOT NULL DEFAULT '0', PRIMARY KEY (`id`), UNIQUE KEY `username` (`username`))");
-	return 1;
-}
-
 UpdatePlayerData(playerid, reason)
 {
 	if (Player[playerid][IsLoggedIn] == false) return 0;
 
-	// if the client crashed, it's not possible to get the player's position in OnPlayerDisconnect callback
-	// so we will use the last saved position (in case of a player who registered and crashed/kicked, the position will be the default spawn point)
 	if (reason == 1)
 	{
 		GetPlayerPos(playerid, Player[playerid][X_Pos], Player[playerid][Y_Pos], Player[playerid][Z_Pos]);
 		GetPlayerFacingAngle(playerid, Player[playerid][A_Pos]);
 	}
-
-	// it is important to store everything in the variables registered in ORM instance
 	Player[playerid][Interior] = GetPlayerInterior(playerid);
 
-	// orm_save sends an UPDATE query
 	orm_save(Player[playerid][ORM_ID]);
 	orm_destroy(Player[playerid][ORM_ID]);
 	return 1;
