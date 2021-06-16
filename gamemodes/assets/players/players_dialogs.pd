@@ -18,6 +18,16 @@ Dialog:Login(playerid, response, listitem, inputtext[])
 		else
 		{
 			SIM(playerid, "Vous n'êtes pas niveau 4 ou plus, vous ne pouvez donc pas accéder aux lobbys.");
+			if (Player[playerid][FirstCo])
+			{
+				Player[playerid][X_Pos] = DEFAULT_POS_X;
+				Player[playerid][Y_Pos] = DEFAULT_POS_Y;
+				Player[playerid][Z_Pos] = DEFAULT_POS_Z;
+				Player[playerid][A_Pos] = DEFAULT_POS_A;
+				SIM(playerid, "Première connexion ! Faites /missions pour trouver des missions disponibles afin de trouver de l'argent et gagner des niveaux.");
+				SIM(playerid, "Vous n'avez, pour le moment, aucun sous en poche. Montrez ce que vous valez avec ces missions.");
+				Player[playerid][FirstCo] = true;
+			}
 			SetSpawnInfo(playerid, NO_TEAM, 0, Player[playerid][X_Pos], Player[playerid][Y_Pos], Player[playerid][Z_Pos], Player[playerid][A_Pos], 0, 0, 0, 0, 0, 0);
 			return SpawnPlayer(playerid);
 		}

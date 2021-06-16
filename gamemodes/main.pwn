@@ -9,6 +9,7 @@
 
 #include "assets/players/players_main.pd"
 #include "assets/lobbys/lobbys_main.pd"
+#include "assets/missions/missions_main.pd"
 
 #pragma warning disable 239
 

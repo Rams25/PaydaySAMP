@@ -18,6 +18,7 @@ Players_OnPlayerConnect(playerid)
 	orm_addvar_float(ormid, Player[playerid][A_Pos], "angle");
 	orm_addvar_int(ormid, Player[playerid][Interior], "interior");
 	orm_addvar_int(ormid, Player[playerid][Level], "level");
+	orm_addvar_int(ormid, Player[playerid][FirstCo], "firstco");
 	orm_setkey(ormid, "username");
 	orm_load(ormid, "OnPlayerDataLoaded", "dd", playerid, g_MysqlRaceCheck[playerid]);
 	return true;

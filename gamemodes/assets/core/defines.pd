@@ -21,4 +21,4 @@
 #define 	SIM(%0,%1) 	\
 								SendClientMessageEx(%0, COLOR_SIM, "|{FFFFFF} "%1)
 #define 	SITA(%0) 	\
-  								SendClientMessageToAllEx(COLOR_SIM, "|{FFFFFF} "%0)
+  								SendClientMessageToAllEx(COLOR_SIM, "|{FFFFFF} "%0) // Send Information to All

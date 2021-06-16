@@ -22,4 +22,5 @@ enum E_PLAYERS
 	TimeCurrentLobby,
 	EkipLobby, // 0 : guetteur | 1 : bandit | 2 : hnouch
 	Level,
+	bool:FirstCo
 };
