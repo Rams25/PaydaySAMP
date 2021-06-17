@@ -1,5 +1,56 @@
 this::ShowPlayerMissions(playerid)
 {
+	new string[1024];
+	format(string, sizeof string, "Nom de la mission\tNiveau requis\n");
+
+	for (new i; i < MAX_MISSIONS; i++)
+	{
+		if (Mission[i][M_RequireLevel] == Player[playerid][Level])
+		{
+
+		}
+	}
+	return true;
+}
+
+this::IsMissionFinished(playerid, mission)
+{
+	new string[124];
+	format (string, sizeof string, "SELECT * FROM `missions_finished` WHERE username = \"%s\" AND mission = %d", Player[playerid][Name], Mission[mission][M_ID]);
+	return mysql_tquery(g_SQL, string, "Mission_Finished", "i", playerid);
+}
+
+this::Mission_Finished(playerid)
+{
+	return cache_num_rows();
+}
+
+this::FinishMission(playerid, mission)
+{
+	new string[124];
+	format (string, sizeof string, "INSERT INTO `missions_finished` (username, mission) VALUES (\"%s\", %d)", Player[playerid][Name], Mission[mission][M_ID]);
+	return mysql_tquery(g_SQL, string, "", "");
+}
+
+this::Missions_OnGameModeInit()
+{
+	return mysql_tquery(g_SQL, "SELECT * FROM `missions`", "Missions_Load", ""); 
+}
+
+this::Missions_Load()
+{
+	new rows = cache_num_rows(), time = GetTickCount(), total;
+
+	if (!rows) return print("[Missions] No records found.");
 	
+	for(new i; i < rows; i++)
+	{
+		cache_get_value_name_int(i, "id", Mission[i][M_ID]);
+		cache_get_value_name_int(i, "requirelevel", Mission[i][M_RequireLevel]);
+		cache_get_value_name(i, "name", Mission[i][M_Name], 255);
+		total++;
+	}
+
+	printf("[Lobbys] Rows - %i. Load - %i. Time: %i ms.", rows, total, GetTickCount()-time);
 	return true;
 }

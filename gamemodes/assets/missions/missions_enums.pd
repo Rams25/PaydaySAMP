@@ -1,0 +1,6 @@
+enum Missions
+{
+	M_ID,
+	M_Name[255],
+	M_RequireLevel,
+};

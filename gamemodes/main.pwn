@@ -22,7 +22,10 @@ public OnGameModeInit()
 	SendRconCommand("language Français");
 	SendRconCommand("mapname Special Payday");
 	SetGameModeText("PayDay 0.1a");
+
 	MySQLConnect_OnGameModeInit();
+	Missions_OnGameModeInit();
+
 	DisableInteriorEnterExits();
  	DisableNameTagLOS();
 	AddPlayerClass(0, 1958.3783, 1343.1572, 15.3746, 269.1425, 0, 0, 0, 0, 0, 0);

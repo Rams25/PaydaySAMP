@@ -21,7 +21,7 @@ this::Lobbys_Load()
 	}
 
 	printf("[Lobbys] Rows - %i. Load - %i. Time: %i ms.", rows, total, GetTickCount()-time);
-	return 1;
+	return true;
 }
 
 this::SearchForLobby(playerid)
